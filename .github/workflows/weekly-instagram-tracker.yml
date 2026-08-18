@@ -38,12 +38,17 @@ jobs:
         run: |
           python src/collect_instagram_apify.py --mode continue --replace-existing
 
-      - name: Commit tracker data
+      - name: Generate 30-day+ competitor report
+        run: |
+          python src/generate_weekly_report.py
+
+      - name: Commit tracker data and report
         run: |
           git config user.name "NBA Competitor Tracker"
           git config user.email "actions@github.com"
 
           git add data/instagram_snapshots.csv
+          git add data/weekly_report.csv
 
           if [ -f data/profile_validation_errors.csv ]; then
             git add data/profile_validation_errors.csv
@@ -54,5 +59,5 @@ jobs:
             exit 0
           fi
 
-          git commit -m "Weekly NBA competitor snapshot $(date -u +'%Y-%m-%d')"
+          git commit -m "Weekly NBA competitor report $(date -u +'%Y-%m-%d')"
           git push
