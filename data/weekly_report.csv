@@ -1,7 +1,7 @@
 date,rank,handle,current_followers,comparison_followers,follower_change_30d_plus,growth_percent_30d_plus,comparison_date,comparison_days,comparison_source,current_total_posts,posts_since_previous_snapshot,previous_post_snapshot_date,ahead_of_nba
-2026-08-18,1,ifbbproleagueoz,56491,56100,391,0.7,2026-07-14,35,historical,,,,yes
+2026-08-18,1,ifbbproleagueoz,56491,56100,391,0.7,2026-07-14,35,historical,7718,,,yes
 2026-08-18,2,nbaaustralia_official,18308,18200,108,0.59,2026-07-14,35,historical,3288,,,no
-2026-08-18,3,icnqld,17775,17700,75,0.42,2026-07-14,35,historical,,,,no
+2026-08-18,3,icnqld,17776,17700,76,0.43,2026-07-14,35,historical,6775,,,no
 2026-08-18,4,icn_nsw,15884,15800,84,0.53,2026-07-14,35,historical,6751,,,no
 2026-08-18,5,nabbaaustralia,15878,15900,-22,-0.14,2026-07-14,35,historical,2956,,,no
 2026-08-18,6,msfitnessaustralia,15362,15200,162,1.07,2026-07-14,35,historical,3562,,,no
