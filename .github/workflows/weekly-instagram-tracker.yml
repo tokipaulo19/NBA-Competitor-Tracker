@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
 
   schedule:
-    # Every Monday at 8:00 AM Brisbane time.
-    # GitHub cron uses UTC, so this is Sunday 10:00 PM UTC.
+    # Every Monday at 8:00 AM Brisbane time
+    # 22:00 UTC Sunday = 08:00 Brisbane Monday
     - cron: "0 22 * * 0"
 
 permissions:
@@ -33,9 +33,15 @@ jobs:
         run: |
           python -m playwright install --with-deps chromium
 
-      - name: Run NBA competitor tracker
+      - name: Run scheduled NBA tracker
+        if: github.event_name == 'schedule'
         run: |
           python src/collect_instagram.py --mode strict
+
+      - name: Run manual NBA tracker
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          python src/collect_instagram.py --mode strict --replace-existing
 
       - name: Commit weekly snapshot
         run: |

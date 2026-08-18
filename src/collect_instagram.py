@@ -627,6 +627,12 @@ def main():
         action="store_true",
     )
 
+    parser.add_argument(
+        "--replace-existing",
+        action="store_true",
+        help="Replace an existing snapshot for today after validation succeeds.",
+    )
+
     args = parser.parse_args()
 
     try:
@@ -666,7 +672,18 @@ def main():
 
     if existing_rows:
 
-        if args.mode == "strict":
+        if args.replace_existing:
+
+            print(
+                f"A snapshot already exists for {today}."
+            )
+
+            print(
+                "Replacement requested. Existing data will only "
+                "be removed after the new collection validates."
+            )
+
+        elif args.mode == "strict":
 
             print(
                 f"A snapshot already exists for {today}."
@@ -678,7 +695,7 @@ def main():
 
             return 3
 
-        if args.mode == "interactive":
+        elif args.mode == "interactive":
 
             action = ask_existing_snapshot_action(
                 today
@@ -879,3 +896,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
