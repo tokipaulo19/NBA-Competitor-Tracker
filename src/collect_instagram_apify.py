@@ -15,6 +15,7 @@ SNAPSHOT_FILE = ROOT / "data" / "instagram_snapshots.csv"
 ERROR_FILE = ROOT / "data" / "profile_validation_errors.csv"
 
 APIFY_ACTOR = "apify~instagram-scraper"
+APIFY_PROFILE_ACTOR = "apify~instagram-profile-scraper"
 
 SNAPSHOT_FIELDS = [
     "date",
@@ -234,6 +235,81 @@ def get_posts(item):
 
     return None
 
+
+
+
+def get_missing_post_counts(handles, token):
+    """
+    Use Apify's dedicated Instagram Profile Scraper only for
+    profiles where the primary scraper did not return postsCount.
+    """
+
+    if not handles:
+        return {}
+
+    url = (
+        f"https://api.apify.com/v2/actors/"
+        f"{APIFY_PROFILE_ACTOR}/run-sync-get-dataset-items"
+    )
+
+    payload = {
+        "usernames": handles,
+        "includeAboutSection": False,
+    }
+
+    request = urllib.request.Request(
+        url=url,
+        data=json.dumps(payload).encode("utf-8"),
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+    )
+
+    try:
+        with urllib.request.urlopen(
+            request,
+            timeout=300
+        ) as response:
+
+            raw = response.read().decode("utf-8")
+
+    except Exception as exc:
+
+        print()
+        print(
+            "WARNING: Post-count fallback request failed:"
+        )
+
+        print(str(exc))
+
+        return {}
+
+    try:
+        items = json.loads(raw)
+    except json.JSONDecodeError:
+        return {}
+
+    if not isinstance(items, list):
+        return {}
+
+    results = {}
+
+    for item in items:
+
+        handle = detect_username(item)
+
+        if not handle:
+            continue
+
+        post_count = get_posts(item)
+
+        if post_count is not None:
+            results[handle] = post_count
+
+    return results
 
 def save_error_report(errors):
     ERROR_FILE.parent.mkdir(
@@ -520,6 +596,56 @@ def main():
     successful = []
     failures = []
 
+    primary_results = {}
+
+    for item in items:
+
+        handle = detect_username(item)
+
+        if handle:
+            primary_results[handle] = item
+
+
+    missing_post_handles = []
+
+    for profile in profiles:
+
+        handle = normalize_handle(
+            profile["handle"]
+        )
+
+        item = primary_results.get(handle)
+
+        if item is None:
+            continue
+
+        if get_followers(item) is None:
+            continue
+
+        if get_posts(item) is None:
+            missing_post_handles.append(handle)
+
+
+    post_fallbacks = {}
+
+    if missing_post_handles:
+
+        print()
+        print(
+            "Post count missing for "
+            f"{len(missing_post_handles)} profile(s)."
+        )
+
+        print(
+            "Running profile-detail fallback..."
+        )
+
+        post_fallbacks = get_missing_post_counts(
+            missing_post_handles,
+            token
+        )
+
+
     print()
     print("PROFILE RESULTS")
     print("-" * 78)
@@ -579,6 +705,17 @@ def main():
 
         posts = get_posts(item)
 
+        post_source = "primary"
+
+        if posts is None:
+
+            posts = post_fallbacks.get(handle)
+
+            if posts is not None:
+                post_source = "profile_fallback"
+            else:
+                post_source = "missing"
+
         result = {
             "handle": handle,
             "followers": followers,
@@ -631,6 +768,16 @@ def main():
 
         save_error_report(
             failures
+        )
+
+    elif ERROR_FILE.exists():
+
+        ERROR_FILE.unlink()
+
+        print()
+        print(
+            "No current profile errors. "
+            "Previous error report removed."
         )
 
         print()
@@ -713,4 +860,5 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
 
