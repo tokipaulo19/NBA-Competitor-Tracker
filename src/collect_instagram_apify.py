@@ -242,6 +242,7 @@ def save_error_report(errors):
     )
 
     fields = [
+        "date_checked",
         "handle",
         "name",
         "profile_url",
@@ -264,10 +265,14 @@ def save_error_report(errors):
 
         for error in errors:
 
-            writer.writerow({
+            row = {
                 field: error.get(field, "")
                 for field in fields
-            })
+            }
+
+            row["date_checked"] = datetime.now().strftime("%Y-%m-%d")
+
+            writer.writerow(row)
 
 
 def get_existing_rows():
@@ -609,6 +614,19 @@ def main():
         f"Failed:     {len(failures)}"
     )
 
+    if len(successful) == 0:
+
+        if failures:
+            save_error_report(failures)
+
+        print()
+        print("CRITICAL ERROR:")
+        print("All profiles failed.")
+        print("No snapshot will be exported.")
+        print()
+
+        return 7
+
     if failures:
 
         save_error_report(
@@ -695,3 +713,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
