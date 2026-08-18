@@ -1,0 +1,53 @@
+﻿name: NBA Weekly Instagram Tracker
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    # Every Monday at 8:00 AM Brisbane time.
+    # GitHub cron uses UTC, so this is Sunday 10:00 PM UTC.
+    - cron: "0 22 * * 0"
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Playwright Chromium
+        run: |
+          python -m playwright install --with-deps chromium
+
+      - name: Run NBA competitor tracker
+        run: |
+          python src/collect_instagram.py --mode strict
+
+      - name: Commit weekly snapshot
+        run: |
+          git config user.name "NBA Competitor Tracker"
+          git config user.email "actions@github.com"
+
+          git add data/instagram_snapshots.csv data/profile_validation_errors.csv
+
+          if git diff --cached --quiet; then
+            echo "No data changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Weekly NBA competitor snapshot $(date -u +'%Y-%m-%d')"
+          git push
