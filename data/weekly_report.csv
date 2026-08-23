@@ -1,7 +1,7 @@
 date,rank,handle,current_followers,comparison_followers,follower_change_30d_plus,growth_percent_30d_plus,comparison_date,comparison_days,comparison_source,current_total_posts,posts_since_previous_snapshot,previous_post_snapshot_date,ahead_of_nba
 2026-08-23,1,ifbbproleagueoz,56503,56100,403,0.72,2026-07-14,40,historical,7723,5,2026-08-18,yes
 2026-08-23,2,nbaaustralia_official,18320,18200,120,0.66,2026-07-14,40,historical,3292,4,2026-08-18,no
-2026-08-23,3,icnqld,17786,17700,86,0.49,2026-07-14,40,historical,6780,5,2026-08-18,no
+2026-08-23,3,icnqld,17787,17700,87,0.49,2026-07-14,40,historical,6780,5,2026-08-18,no
 2026-08-23,4,icn_nsw,15943,15800,143,0.91,2026-07-14,40,historical,6758,7,2026-08-18,no
 2026-08-23,5,nabbaaustralia,15836,15900,-64,-0.4,2026-07-14,40,historical,2960,5,2026-08-18,no
 2026-08-23,6,msfitnessaustralia,15391,15200,191,1.26,2026-07-14,40,historical,3569,7,2026-08-18,no
@@ -15,7 +15,7 @@ date,rank,handle,current_followers,comparison_followers,follower_change_30d_plus
 2026-08-23,14,ynf_australia,4635,4700,-65,-1.38,2026-07-14,40,historical,815,0,2026-08-18,no
 2026-08-23,15,icn_act,4583,4600,-17,-0.37,2026-07-14,40,historical,1872,2,2026-08-18,no
 2026-08-23,16,icn_tasmania,2278,2300,-22,-0.96,2026-07-14,40,historical,2146,1,2026-08-18,no
-2026-08-23,17,cbrfitexpo,2159,2100,59,2.81,2026-07-14,40,historical,331,0,2026-08-18,no
+2026-08-23,17,cbrfitexpo,2158,2100,58,2.76,2026-07-14,40,historical,331,0,2026-08-18,no
 2026-08-23,18,icn.indonesia,1839,1800,39,2.17,2026-07-14,40,historical,176,1,2026-08-18,no
 2026-08-23,19,dfba_global,1833,1800,33,1.83,2026-07-14,40,historical,210,2,2026-08-18,no
 2026-08-23,20,msfitnessaustralia_perth,1446,1500,-54,-3.6,2026-07-14,40,historical,1357,0,2026-08-18,no
