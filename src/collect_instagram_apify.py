@@ -5,6 +5,7 @@ import csv
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.request
 
@@ -80,6 +81,16 @@ def normalize_handle(value):
 
 
 def run_apify(profiles, token):
+    """
+    Run the primary Apify Instagram collection.
+
+    Transient gateway/service failures are retried automatically.
+    Permanent HTTP errors fail immediately.
+
+    No snapshot is written unless this function eventually succeeds
+    and the normal profile validation later passes.
+    """
+
     url = (
         f"https://api.apify.com/v2/actors/"
         f"{APIFY_ACTOR}/run-sync-get-dataset-items"
@@ -96,64 +107,177 @@ def run_apify(profiles, token):
 
     body = json.dumps(payload).encode("utf-8")
 
-    request = urllib.request.Request(
-        url=url,
-        data=body,
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
+    retryable_http_codes = {
+        502,
+        503,
+        504,
+    }
+
+    retry_delays = [
+        15,
+        30,
+        60,
+    ]
+
+    total_attempts = 1 + len(retry_delays)
+
+    for attempt in range(1, total_attempts + 1):
+
+        request = urllib.request.Request(
+            url=url,
+            data=body,
+            method="POST",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+        )
+
+        try:
+
+            print(
+                f"Apify request attempt "
+                f"{attempt}/{total_attempts}..."
+            )
+
+            with urllib.request.urlopen(
+                request,
+                timeout=300
+            ) as response:
+
+                raw = response.read().decode(
+                    "utf-8"
+                )
+
+            try:
+                data = json.loads(raw)
+
+            except json.JSONDecodeError:
+
+                raise RuntimeError(
+                    "Apify returned invalid JSON."
+                )
+
+            if not isinstance(data, list):
+
+                raise RuntimeError(
+                    f"Unexpected Apify response: {data}"
+                )
+
+            if attempt > 1:
+
+                print(
+                    "Apify request recovered "
+                    "successfully after retry."
+                )
+
+            return data
+
+        except urllib.error.HTTPError as exc:
+
+            error_body = (
+                exc.read().decode(
+                    "utf-8",
+                    errors="replace"
+                )
+            )
+
+            if (
+                exc.code in retryable_http_codes
+                and attempt < total_attempts
+            ):
+
+                delay = retry_delays[
+                    attempt - 1
+                ]
+
+                print()
+                print(
+                    f"WARNING: Apify returned "
+                    f"HTTP {exc.code}."
+                )
+
+                print(
+                    f"Temporary service/gateway error. "
+                    f"Retrying in {delay} seconds..."
+                )
+
+                print()
+
+                time.sleep(delay)
+
+                continue
+
+            raise RuntimeError(
+                f"Apify API returned HTTP "
+                f"{exc.code}: {error_body}"
+            )
+
+        except urllib.error.URLError as exc:
+
+            if attempt < total_attempts:
+
+                delay = retry_delays[
+                    attempt - 1
+                ]
+
+                print()
+                print(
+                    "WARNING: Could not reach "
+                    "Apify API."
+                )
+
+                print(str(exc))
+
+                print(
+                    f"Retrying in {delay} seconds..."
+                )
+
+                print()
+
+                time.sleep(delay)
+
+                continue
+
+            raise RuntimeError(
+                f"Could not reach Apify API "
+                f"after {total_attempts} attempts: "
+                f"{exc}"
+            )
+
+        except TimeoutError:
+
+            if attempt < total_attempts:
+
+                delay = retry_delays[
+                    attempt - 1
+                ]
+
+                print()
+                print(
+                    "WARNING: Apify request "
+                    "timed out."
+                )
+
+                print(
+                    f"Retrying in {delay} seconds..."
+                )
+
+                print()
+
+                time.sleep(delay)
+
+                continue
+
+            raise RuntimeError(
+                "Apify request timed out after "
+                f"{total_attempts} attempts."
+            )
+
+    raise RuntimeError(
+        "Apify request failed after all retry attempts."
     )
-
-    try:
-        with urllib.request.urlopen(
-            request,
-            timeout=300
-        ) as response:
-
-            raw = response.read().decode("utf-8")
-
-    except urllib.error.HTTPError as exc:
-
-        error_body = (
-            exc.read().decode("utf-8", errors="replace")
-        )
-
-        raise RuntimeError(
-            f"Apify API returned HTTP {exc.code}: "
-            f"{error_body}"
-        )
-
-    except urllib.error.URLError as exc:
-
-        raise RuntimeError(
-            f"Could not reach Apify API: {exc}"
-        )
-
-    except TimeoutError:
-
-        raise RuntimeError(
-            "Apify request timed out."
-        )
-
-    try:
-        data = json.loads(raw)
-
-    except json.JSONDecodeError:
-
-        raise RuntimeError(
-            "Apify returned invalid JSON."
-        )
-
-    if not isinstance(data, list):
-        raise RuntimeError(
-            f"Unexpected Apify response: {data}"
-        )
-
-    return data
-
 
 def detect_username(item):
     candidates = [
@@ -860,5 +984,6 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+
 
 

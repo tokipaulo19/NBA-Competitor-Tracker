@@ -120,18 +120,29 @@ def set_border(cell, colour=LINE):
 
 
 def safe_growth_percent(row):
-    value = as_float(row.get("growth_percent_30d_plus"))
+    """
+    weekly_report.csv stores growth_percent_30d_plus
+    as percentage points.
+
+    Example:
+        Previous followers: 100
+        Current followers:  101
+        CSV growth value:    1.00
+
+    openpyxl / Excel percentage cells expect a decimal ratio,
+    so 1.00% must be stored as 0.01.
+
+    Therefore every valid report percentage is divided by 100.
+    """
+
+    value = as_float(
+        row.get("growth_percent_30d_plus")
+    )
 
     if value is None:
         return None
 
-    # weekly_report.csv currently stores percentage as numeric percent
-    # or ratio depending on generator version.
-    # Normalize values above 1 into decimal percentage.
-    if abs(value) > 1:
-        return value / 100
-
-    return value
+    return value / 100
 
 
 def autosize(ws, minimum=8, maximum=40):
@@ -1435,3 +1446,4 @@ print(f"Saved:")
 print(OUTPUT_XLSX)
 print()
 print("=" * 78)
+
