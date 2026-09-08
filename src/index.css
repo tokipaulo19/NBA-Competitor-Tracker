@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+/* NBA Brand Colors */
+:root {
+  --nba-gold: #E3B100;
+  --nba-gold-light: #f0c832;
+  --nba-gold-dark: #b8900a;
+  --nba-black: #0a0a0a;
+  --nba-dark: #111111;
+  --nba-card: #1a1a1a;
+  --nba-border: #2a2a2a;
+}
+
+html, body {
+  background-color: var(--nba-black);
+  color: #e5e5e5;
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+
+/* Recharts tooltip override */
+.recharts-tooltip-wrapper {
+  outline: none !important;
+}
+
+/* Smooth transitions */
+* {
+  transition-property: background-color, border-color, opacity;
+  transition-duration: 150ms;
+}
