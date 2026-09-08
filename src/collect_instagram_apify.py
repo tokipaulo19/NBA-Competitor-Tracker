@@ -595,6 +595,8 @@ def ask_continue():
 
 
 def main():
+    global COMPETITORS_FILE, SNAPSHOT_FILE, ERROR_FILE
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -612,7 +614,39 @@ def main():
         action="store_true",
     )
 
+    parser.add_argument(
+        "--competitors-file",
+        default="config/competitors.csv",
+        help="Competitor CSV path, relative to the repository root.",
+    )
+
+    parser.add_argument(
+        "--snapshot-file",
+        default="data/instagram_snapshots.csv",
+        help="Snapshot CSV path, relative to the repository root.",
+    )
+
+    parser.add_argument(
+        "--error-file",
+        default="data/profile_validation_errors.csv",
+        help="Validation error CSV path, relative to the repository root.",
+    )
+
+    parser.add_argument(
+        "--tracker-name",
+        default="NBA COMPETITOR TRACKER",
+        help="Display name used in console output.",
+    )
+
     args = parser.parse_args()
+
+    def resolve_repo_path(value):
+        path = Path(value)
+        return path if path.is_absolute() else ROOT / path
+
+    COMPETITORS_FILE = resolve_repo_path(args.competitors_file)
+    SNAPSHOT_FILE = resolve_repo_path(args.snapshot_file)
+    ERROR_FILE = resolve_repo_path(args.error_file)
 
     token = os.environ.get(
         "APIFY_TOKEN",
@@ -637,7 +671,7 @@ def main():
 
     print()
     print("=" * 78)
-    print("NBA COMPETITOR TRACKER")
+    print(args.tracker_name.upper())
     print("APIFY INSTAGRAM COLLECTION")
     print("=" * 78)
     print()

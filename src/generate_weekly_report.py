@@ -1,5 +1,6 @@
 ﻿from pathlib import Path
 from datetime import datetime, timedelta
+import argparse
 import csv
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -64,8 +65,26 @@ def find_field(row, candidates):
 
 def main():
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--snapshot-file", default="data/instagram_snapshots.csv")
+    parser.add_argument("--historical-file", default="data/historical.csv")
+    parser.add_argument("--report-file", default="data/weekly_report.csv")
+    parser.add_argument("--target-handle", default=NBA_HANDLE)
+    parser.add_argument("--target-label", default="NBA")
+    args = parser.parse_args()
+
+    def resolve_repo_path(value):
+        path = Path(value)
+        return path if path.is_absolute() else ROOT / path
+
+    snapshot_file = resolve_repo_path(args.snapshot_file)
+    historical_file = resolve_repo_path(args.historical_file)
+    report_file = resolve_repo_path(args.report_file)
+    target_handle = args.target_handle.strip().lower().lstrip("@")
+    target_label = args.target_label.strip() or target_handle
+
     snapshots = load_csv(
-        SNAPSHOT_FILE
+        snapshot_file
     )
 
     if not snapshots:
@@ -173,9 +192,7 @@ def main():
     # Historical manually collected data
     # --------------------------------------------------------
 
-    historical_rows = load_csv(
-        HISTORICAL_FILE
-    )
+    historical_rows = load_csv(historical_file)
 
     if historical_rows:
 
@@ -274,28 +291,28 @@ def main():
     )
 
     # ========================================================
-    # NBA CURRENT DATA
+    # TARGET ACCOUNT CURRENT DATA
     # ========================================================
 
-    nba_row = current_map.get(
-        NBA_HANDLE
+    target_row = current_map.get(
+        target_handle
     )
 
-    if not nba_row:
+    if not target_row:
         raise RuntimeError(
-            f"NBA account @{NBA_HANDLE} "
+            f"Target account @{target_handle} "
             "is missing from current snapshot."
         )
 
-    nba_followers = to_int(
-        nba_row.get(
+    target_followers = to_int(
+        target_row.get(
             "followers"
         )
     )
 
-    if nba_followers is None:
+    if target_followers is None:
         raise RuntimeError(
-            "NBA follower count is missing."
+            f"{target_label} follower count is missing."
         )
 
     # ========================================================
@@ -329,7 +346,7 @@ def main():
                 row.get("followers")
             )
             or 0
-        ) > nba_followers
+        ) > target_followers
     )
 
     # ========================================================
@@ -524,7 +541,15 @@ def main():
                 "yes"
                 if (
                     current_followers is not None
-                    and current_followers > nba_followers
+                    and current_followers > target_followers
+                )
+                else "no"
+            ),
+            "ahead_of_target": (
+                "yes"
+                if (
+                    current_followers is not None
+                    and current_followers > target_followers
                 )
                 else "no"
             ),
@@ -549,10 +574,11 @@ def main():
         "posts_since_previous_snapshot",
         "previous_post_snapshot_date",
         "ahead_of_nba",
+        "ahead_of_target",
     ]
 
     with open(
-        REPORT_FILE,
+        report_file,
         "w",
         encoding="utf-8",
         newline=""
@@ -575,7 +601,7 @@ def main():
 
     print()
     print("=" * 78)
-    print("NBA 30-DAY+ COMPETITOR GROWTH REPORT")
+    print(f"{target_label.upper()} 30-DAY+ COMPETITOR GROWTH REPORT")
     print("=" * 78)
 
     print()
@@ -590,36 +616,36 @@ def main():
     )
 
     print(
-        f"NBA followers:        "
-        f"{nba_followers:,}"
+        f"{target_label} followers:        "
+        f"{target_followers:,}"
     )
 
     print(
-        f"NBA follower rank:    "
-        f"{rank_lookup[NBA_HANDLE]} "
+        f"{target_label} follower rank:    "
+        f"{rank_lookup[target_handle]} "
         f"of {len(current_rows)}"
     )
 
     print(
-        f"Accounts ahead NBA:   "
+        f"Accounts ahead {target_label}:   "
         f"{accounts_ahead}"
     )
 
-    nba_report = next(
+    target_report = next(
         item
         for item in report_rows
-        if item["handle"] == NBA_HANDLE
+        if item["handle"] == target_handle
     )
 
     print()
 
     if (
-        nba_report[
+        target_report[
             "follower_change_30d_plus"
         ] != ""
     ):
 
-        change = nba_report[
+        change = target_report[
             "follower_change_30d_plus"
         ]
 
@@ -630,30 +656,30 @@ def main():
         )
 
         print(
-            f"NBA comparison:       "
-            f"{nba_report['comparison_date']} "
-            f"→ {current_date_string}"
+            f"{target_label} comparison:       "
+            f"{target_report['comparison_date']} "
+            f"to {current_date_string}"
         )
 
         print(
             f"Comparison period:    "
-            f"{nba_report['comparison_days']} days"
+            f"{target_report['comparison_days']} days"
         )
 
         print(
-            f"NBA follower change:  "
+            f"{target_label} follower change:  "
             f"{sign}{change:,}"
         )
 
         print(
-            f"NBA growth:           "
-            f"{nba_report['growth_percent_30d_plus']}%"
+            f"{target_label} growth:           "
+            f"{target_report['growth_percent_30d_plus']}%"
         )
 
     else:
 
         print(
-            "NBA 30-day growth:    "
+            f"{target_label} 30-day growth:    "
             "Not enough historical data"
         )
 
@@ -719,7 +745,7 @@ def main():
 
     print()
     print("Report saved:")
-    print(REPORT_FILE)
+    print(report_file)
     print()
 
 
