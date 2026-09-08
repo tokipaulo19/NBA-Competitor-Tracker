@@ -3,6 +3,15 @@ name: Personalised Posing Weekly Instagram Tracker
 on:
   workflow_dispatch:
 
+  push:
+    branches:
+      - main
+    paths:
+      - "config/personalisedposing_competitors.csv"
+      - "src/collect_instagram_apify.py"
+      - "src/generate_weekly_report.py"
+      - ".github/workflows/personalised-posing-instagram-tracker.yml"
+
   schedule:
     # Monday 9:00 AM Brisbane time, after the NBA tracker has finished.
     - cron: "0 23 * * 0"
@@ -38,6 +47,11 @@ jobs:
 
       - name: Run manual Personalised Posing tracker
         if: github.event_name == 'workflow_dispatch'
+        run: |
+          python src/collect_instagram_apify.py --mode continue --replace-existing --competitors-file config/personalisedposing_competitors.csv --snapshot-file data/personalisedposing/instagram_snapshots.csv --error-file data/personalisedposing/profile_validation_errors.csv --tracker-name "Personalised Posing Competitor Tracker"
+
+      - name: Refresh Personalised Posing tracker after configuration changes
+        if: github.event_name == 'push'
         run: |
           python src/collect_instagram_apify.py --mode continue --replace-existing --competitors-file config/personalisedposing_competitors.csv --snapshot-file data/personalisedposing/instagram_snapshots.csv --error-file data/personalisedposing/profile_validation_errors.csv --tracker-name "Personalised Posing Competitor Tracker"
 
